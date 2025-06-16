@@ -68,7 +68,7 @@ Feel free to DM for questions, collaboration, or memes.
 
 ```bash
 git clone https://github.com/kennardliong/tokotalk.git
-cd tokotalk
+cd tokotalk ```
 
 ### 2. Set Up the Backend (Flask)
 
