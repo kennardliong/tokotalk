@@ -32,6 +32,8 @@
 ### Others
 - `Meta Developer API` for WhatsApp messaging
 - `MongoDB Atlas` for remote NoSQL storage
+  
+---
 
 ### 🛣️ Roadmap
  Login & dashboard system ✅
