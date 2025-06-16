@@ -44,11 +44,11 @@
 
  Meta + WhatsApp integration ✅
 
- Chat history visualization
+ Chat history visualization ⏳
 
- Product recommendation engine
+ Product recommendation engine ⏳
 
- Admin panel for analytics
+ Admin panel for analytics ⏳
 
 ### 📝 License
 MIT License
