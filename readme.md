@@ -76,10 +76,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 Create a .env file in backend/:
-MONGO_URI=your_mongo_uri
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_ACCOUNT_SID=your_account_sid
-WHATSAPP_PHONE_NUMBER=whatsapp:+1415xxxxxxx
+MONGO_URI=your_mongo_uri # Source from https://www.mongodb.com/cloud/atlas/register
+GOOGLE_API_KEY = gemini_key # https://ai.google.dev/gemini-api/docs/api-key
+VERIFY_TOKEN=your_verify_token # https://developers.facebook.com/docs/development/register/
+ACCESS_TOKEN=your_access_token
+WHATSAPP_API_URL = your_api_url
 
 Then run the Flask backend:
 python app.py
