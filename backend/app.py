@@ -1,0 +1,284 @@
+from flask import Flask, request, jsonify
+from bot_logic import get_bot_reply
+from flask_cors import CORS
+import pandas as pd
+from langdetect import detect
+import requests
+from dotenv import load_dotenv
+import os
+import requests
+from utils import log_error, error_response
+from uuid import uuid4
+from db import db
+from db_ops import (
+    load_store_config,
+    save_store_config,
+    log_message,
+    save_products,
+    get_products,
+    upsert_user,
+    get_chat_history
+)
+
+#default settings
+store_config = {
+    "store_name": "Toko Mentari",
+    "bot_identity": "Tok",
+    "payment_methods": ["QRIS", "GoPay", "Transfer"],
+    "shipping_methods": ["Gojek", "SiCepat"],
+    "suggest_related": True,
+    "use_emojis": False,
+    "use_stickers": False,
+    "message_length": "short",
+    "personality": "casual"
+}
+
+#similar languages to indo - revert to indo when this happens
+SIMILAR_LANGS = {"ms", "tl", "jv", "su"}
+
+load_dotenv()
+
+WHATSAPP_API_URL = os.getenv("WHATSAPP_API_URL")
+# ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
+
+ACCESS_TOKEN = "EAAPKXJP7ak4BO7ZBC0JgRNYLtLTXeFZAjawemYlpfCCzchkZCU1Sck9l6bS4Owpra3d5AHKhT6rV2bvtqXgbi7NisGODp0eqKqDLwDuZBRNPI74zqX9LjqsrRC2tfDAsY3akQaMMpO5RicCbCwzp3bofcgdsZBzasZBvHyK9oGgJVqGghaEe6aamt9CI8JxZC3o8wZDZD"
+
+app = Flask(__name__)
+CORS(app)
+
+
+def send_whatsapp_message(recipient_id, message_text):
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": recipient_id,
+        "type": "text",
+        "text": {
+            "body": message_text
+        }
+    }
+
+    try:
+        response = requests.post(WHATSAPP_API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        print("WhatsApp API success:", response.status_code)
+
+    except requests.exceptions.RequestException as e:
+        log_error("send_whatsapp_message", e)
+
+
+def process_user_message(sender_id, user_input, store_id, history=None):
+    if not user_input:
+        return {"error": "No message provided"}, 400
+
+    if history is None:
+        history = [{"role": msg["role"], "content": msg["content"]} for msg in get_chat_history(sender_id)]
+
+    history.append({"role": "user", "content": user_input})
+    trimmed_history = history[-10:]
+
+    # Load config from DB or fallback
+    config = load_store_config(store_id) or store_config
+
+    # Upsert user and log message
+    upsert_user(sender_id, store_id)
+    log_message(sender_id, "user", user_input, store_id)
+
+    user_text = user_input.strip().lower()
+    short_greeting = user_text in {"halo", "hello", "hallo"} or len(user_text) < 5
+
+    if short_greeting:
+        lang = "id"
+    else:
+        try:
+            lang = detect(user_input)
+            if lang in SIMILAR_LANGS:
+                lang = "id"
+        except:
+            lang = "id"
+
+    reply = get_bot_reply(user_input, config, language=lang, history=trimmed_history)
+    history.append({"role": "bot", "content": reply})
+
+    log_message(sender_id, "bot", reply, store_id)
+
+    return {"reply": reply, "history": history, "language": lang}
+
+
+@app.route("/")
+def home():
+    return "Toko Mentari Bot is running!"
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get("email")
+    if not email:
+        return error_response("Email is required", 400)
+
+    user = db.users.find_one({"metadata.email": email})
+    if not user:
+        return error_response("User not found", 404)
+
+    store_id = user.get("metadata", {}).get("store_id")
+    if not store_id:
+        return error_response("No store assigned", 400)
+
+    return {"store_id": store_id}, 200
+
+
+@app.route("/register-store", methods=["POST"])
+def register_store():
+    try:
+        data = request.json
+        store_name = data.get("store_name")
+        owner_phone = data.get("owner_phone")
+        owner_email = data.get("owner_email", "")
+
+        if not store_name or not owner_phone:
+            return error_response("Store name and phone are required.", 400)
+
+        store_id = f"store_{uuid4().hex[:8]}"
+
+        default_config = {
+            "store_id": store_id,
+            "store_name": store_name,
+            "bot_identity": "Tok",
+            "payment_methods": ["QRIS", "GoPay", "Transfer"],
+            "shipping_methods": ["Gojek", "SiCepat"],
+            "suggest_related": False,
+            "use_emojis": False,
+            "use_stickers": False,
+            "message_length": "short",
+            "personality": "casual",
+        }
+
+        save_store_config(store_id, default_config)
+        upsert_user(owner_phone, {"store_id": store_id, "email": owner_email})
+
+        return {"message": "Store registered successfully!", "store_id": store_id}, 200
+
+    except Exception as e:
+        log_error("/register-store", e)
+        return error_response("Failed to register store.")
+
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    try:
+        data = request.get_json()
+        user_input = data.get("message", "")
+        sender_id = data.get("sender_id", "web_demo")  # fallback default
+        store_id = data.get("store_id")
+        history = data.get("history", [])
+
+        result = process_user_message(sender_id, user_input, store_id, history)
+        return jsonify(result)
+    except Exception as e:
+        log_error("/chat", e)
+        return error_response("Chat processing failed.")
+
+@app.route("/webhook", methods=["GET"])
+def verify():
+    # Webhook verification with Meta
+    mode = request.args.get("hub.mode")
+    token = request.args.get("hub.verify_token")
+    challenge = request.args.get("hub.challenge")
+
+    if mode == "subscribe" and token == VERIFY_TOKEN:
+        print("WEBHOOK_VERIFIED")
+        return challenge, 200
+    else:
+        return "Verification failed", 403
+
+
+@app.route("/webhook", methods=["POST"])
+def receive_message():
+    data = request.get_json()
+    print("Incoming webhook data:", data)
+
+    try:
+        entry = data["entry"][0]
+        changes = entry["changes"][0]
+        value = changes["value"]
+        messages = value.get("messages")
+        
+        if not messages:
+            return "No messages", 200  # Might be a delivery/read receipt etc.
+
+        message = messages[0]
+        sender = message["from"]  # Phone number in WhatsApp ID format
+        text = message["text"]["body"]
+
+        print(f"Received from {sender}: {text}")
+
+        # Generate reply using the same logic as the web chat
+        result = process_user_message(sender, text)
+        reply_text = result["reply"]
+
+        # Send reply back to WhatsApp via the API
+        send_whatsapp_message(sender, reply_text)
+
+    except Exception as e:
+        print("Error processing webhook:", e)
+
+    return "OK", 200
+
+
+
+@app.route('/upload-csv', methods=['POST'])
+def upload_csv():
+    # data = request.get_json()
+
+    if 'file' not in request.files:
+        return error_response("No file uploaded", 400)
+
+    file = request.files['file']
+    if not file.filename.endswith('.csv'):
+        return error_response("File must be a CSV", 400)
+
+    try:
+        store_id = request.form.get("store_id")
+        if not store_id:
+            return error_response("Missing store_id", 400)
+
+        df = pd.read_csv(file)
+        product_list = df.to_dict(orient='records')
+
+        save_products(store_id, product_list)
+
+        # df.to_csv('products.csv', index=False)  # Overwrite old file - the default is products.csv
+        return {'message': 'CSV uploaded and stored to DB successfully'}, 200
+    except Exception as e:
+        log_error("/upload-csv", e)
+        return error_response("CSV upload failed.")
+
+@app.route('/update-config', methods=['POST'])
+def update_config():
+    data = request.get_json()
+    store_id = data.get("store_id")
+    config = data.get("config")
+    save_store_config(store_id, config)
+    print("config: ",config)
+    return {'message': 'Config saved to DB'}, 200
+
+@app.route('/get-config', methods=['GET'])
+def get_config():
+    store_id = request.args.get("store_id", "store_mentari")
+    config = load_store_config(store_id) or store_config
+    return jsonify(config)
+
+@app.route('/get-products', methods=['GET'])
+def get_products_route():
+    store_id = request.args.get("store_id", "store_mentari")
+    return jsonify(get_products(store_id))
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
