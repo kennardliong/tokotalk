@@ -33,6 +33,29 @@
 - `Meta Developer API` for WhatsApp messaging
 - `MongoDB Atlas` for remote NoSQL storage
 
+### 🛣️ Roadmap
+ Login & dashboard system ✅
+
+ CSV-based product upload ✅
+
+ Configurable bot personality ✅
+
+ Meta + WhatsApp integration ✅
+
+ Chat history visualization
+
+ Product recommendation engine
+
+ Admin panel for analytics
+
+### 📝 License
+MIT License
+
+### 📬 Contact
+Built by @kennardliong.
+Feel free to DM for questions, collaboration, or memes.
+
+
 ---
 
 
@@ -95,25 +118,3 @@ Install with:
 npm install
 
 ---
-
-🛣️ Roadmap
- Login & dashboard system ✅
-
- CSV-based product upload ✅
-
- Configurable bot personality ✅
-
- Meta + WhatsApp integration ✅
-
- Chat history visualization
-
- Product recommendation engine
-
- Admin panel for analytics
-
-📝 License
-MIT License
-
-📬 Contact
-Built by @kennardliong.
-Feel free to DM for questions, collaboration, or memes.
