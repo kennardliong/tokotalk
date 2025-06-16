@@ -65,12 +65,12 @@ Feel free to DM for questions, collaboration, or memes.
 ## 🔧 Installation
 
 ### 1. Clone the Repo
-
+```
 git clone https://github.com/kennardliong/tokotalk.git
 cd tokotalk 
-
+```
 ### 2. Set Up the Backend (Flask)
-
+```
 cd backend
 python3 -m venv venv
 source venv/bin/activate
@@ -85,13 +85,13 @@ WHATSAPP_API_URL = your_api_url
 
 Then run the Flask backend:
 python app.py
-
+```
 ### 3. Set Up the Frontend (React)
-
+```
 cd ../storebot-ui
 npm install
 npm start
-
+```
 ---
 
 📦 Backend Python Dependencies
