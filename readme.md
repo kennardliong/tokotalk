@@ -95,8 +95,9 @@ npm start
 ---
 
 📦 Backend Python Dependencies
-Your requirements.txt:
 
+Your requirements.txt:
+```
 Flask
 Flask-CORS
 pymongo
@@ -104,10 +105,11 @@ python-dotenv
 
 Install them with:
 pip install -r requirements.txt
+```
 
 Frontend NPM Modules
 From storebot-ui/package.json:
-
+```
 "dependencies": {
   "react": "^18.0.0",
   "react-dom": "^18.0.0",
@@ -115,8 +117,10 @@ From storebot-ui/package.json:
   "react-scripts": "latest",
   "tailwindcss": "^3.0.0"
 }
+```
 
 Install with:
+```
 npm install
-
+```
 ---
