@@ -92,10 +92,10 @@ cd ../storebot-ui
 npm install
 npm start
 ```
+
 ---
 
-📦 Backend Python Dependencies
-
+### 📦 Backend Python Dependencies
 Your requirements.txt:
 ```
 Flask
@@ -107,7 +107,7 @@ Install them with:
 pip install -r requirements.txt
 ```
 
-Frontend NPM Modules
+### Frontend NPM Modules
 From storebot-ui/package.json:
 ```
 "dependencies": {
