@@ -4,6 +4,8 @@ import LandingPage from "./pages/LandingPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginForm from "./components/LoginForm";
 import Dashboard from "././pages/Dashboard"; // This is your existing chatbot UI
+import PricingPage from "./pages/Pricing";
+import ProductPage from "./pages/ProductPage";
 
 function App() {
 
@@ -20,6 +22,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginForm onLogin={setStoreId} />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/product" element={<ProductPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>

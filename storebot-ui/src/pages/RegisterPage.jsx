@@ -37,7 +37,7 @@ function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-sky-400 via-sky-200 to-white">
       <form
         onSubmit={handleRegister}
         className="bg-white shadow-md rounded-lg p-6 w-full max-w-md"

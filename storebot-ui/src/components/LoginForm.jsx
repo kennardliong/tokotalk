@@ -33,20 +33,22 @@ export default function LoginForm({ onLogin }) {
   };
 
   return (
-    <form onSubmit={handleLogin} className="max-w-sm mx-auto p-4 shadow rounded">
-      <h2 className="text-lg font-bold mb-2">Login</h2>
-      <input
-        type="email"
-        required
-        className="w-full mb-2 border px-2 py-1 rounded"
-        placeholder="Enter your email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-        Login
-      </button>
-      {status && <p className="mt-2 text-sm">{status}</p>}
-    </form>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-sky-400 via-sky-200 to-white">
+      <form onSubmit={handleLogin} className="max-w-sm mx-auto p-6 shadow rounded bg-white">
+        <h2 className="text-lg font-bold mb-2">Login</h2>
+        <input
+          type="email"
+          required
+          className="w-full mb-2 border px-2 py-1 rounded"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+          Login
+        </button>
+        {status && <p className="mt-2 text-sm">{status}</p>}
+      </form>
+    </div>
   );
 }

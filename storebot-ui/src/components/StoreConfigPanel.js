@@ -1,157 +1,115 @@
-import { useEffect, useState } from "react";
-
-const defaultConfig = {
-  store_name: "bro Mentari",
-  bot_identity: "Tok",
-  payment_methods: ["QRIS", "GoPay", "Transfer"],
-  shipping_methods: ["Gojek", "SiCepat"],
-  suggest_related: true,
-  personality: "casual",
-  message_length: "short",
-  use_emojis: false,
-  use_stickers: false,
-};
+// src/components/StoreConfigPanel.jsx
+import React from "react";
+import {useState} from "react";
 
 const toneOptions = ["friendly", "casual", "professional"];
 
-export default function StoreConfigPanel() {
-  const [config, setConfig] = useState(null);
-  const [status, setStatus] = useState("");
-  const storeId = localStorage.getItem("storeId");
+export default function StoreConfigPanel({ config, setConfig, updateConfig, status }) {
+  const [focusedField, setFocusedField] = useState(null);
 
-  // Load config on mount
-  useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/get-config?store_id=${storeId}`);
-        const data = await res.json();
-        console.log("Fetched config:", data);
-        if (data) {
-          setConfig(data);
-        } else {
-          setConfig(defaultConfig);
-          console.log("error")
-        }
-      } catch (err) {
-        console.error("Failed to fetch config:", err);
-        setConfig(defaultConfig);
-      }
-    };
+  const inputRef = React.useRef(null);
+  const extraInfoRef = React.useRef(null);
 
-    if (storeId) {
-      fetchConfig();
-    } else {
-      console.warn("No store_id found in localStorage");
-      setConfig(defaultConfig);
+  React.useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
-  }, [storeId]);
-
-  const toneIndex = config ? toneOptions.indexOf(config.personality) : 0;
-
-  const handleToneChange = (e) => {
-    const idx = parseInt(e.target.value, 10);
-    setConfig({ ...config, personality: toneOptions[idx] });
-  };
-
-  const handleListCheckbox = (field, value) => {
-    const list = config[field];
-    const updated = list.includes(value)
-      ? list.filter((item) => item !== value)
-      : [...list, value];
-    setConfig({ ...config, [field]: updated });
-  };
-
-  const updateConfig = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/update-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          store_id: storeId,
-          config: config,
-        }),
-      });
-
-      const data = await res.json();
-      setStatus(data.message || "Updated!");
-    } catch (err) {
-      console.error("Failed to update config:", err);
-      setStatus("Error updating config");
-    }
-
-    setTimeout(() => setStatus(""), 2000);
-  };
+  }, [config]);
 
   if (!config) return <div className="text-gray-500">Loading store config...</div>;
 
+  const handleChange = (field, value) => {
+    setConfig({ ...config, [field]: value });
+  };
+
+  const handleListCheckbox = (field, value) => {
+    const updated = config[field].includes(value)
+      ? config[field].filter((v) => v !== value)
+      : [...config[field], value];
+    handleChange(field, updated);
+  };
+
+  const FormRow = ({ label, children }) => (
+    <div className="flex items-start justify-between py-4 border-b">
+      <label className="w-1/3 text-sm font-medium text-gray-600 pt-2">{label}</label>
+      <div className="w-2/3">{children}</div>
+    </div>
+  );
+
+
+
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 mb-6 w-full max-w-md">
-      <h2 className="text-lg font-semibold mb-2">Store Settings</h2>
+    <div className="bg-white shadow-lg rounded-xl p-8 max-w-7xl mx-auto">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Store Settings</h2>
 
-      <label className="block mb-2">
-        <span className="text-sm">Store Name</span>
+      <FormRow label="Store Name">
         <input
           type="text"
-          className="mt-1 w-full border rounded px-2 py-1"
+          className="w-full border rounded px-3 py-2"
           value={config.store_name}
-          onChange={(e) => setConfig({ ...config, store_name: e.target.value })}
+          onChange={(e) => handleChange("store_name", e.target.value)}
+          onFocus={() => setFocusedField("store_name")}
+          ref={focusedField === "store_name" ? inputRef : null}
         />
-      </label>
 
-      <label className="block mb-2">
-        <span className="text-sm">Bot Identity</span>
+      </FormRow>
+
+      <FormRow label="Bot Identity">
+
         <input
           type="text"
-          className="mt-1 w-full border rounded px-2 py-1"
+          className="w-full border rounded px-3 py-2"
           value={config.bot_identity}
-          onChange={(e) => setConfig({ ...config, bot_identity: e.target.value })}
+          onChange={(e) => handleChange("bot_identity", e.target.value)}
+          onFocus={() => setFocusedField("bot_identity")}
+          ref={focusedField === "bot_identity" ? inputRef : null}
         />
-      </label>
 
-      {/* Tone / Personality slider */}
-      <div className="mb-4">
-        <span className="text-sm block mb-1">Tone</span>
-        <input
-          type="range"
-          min="0"
-          max={toneOptions.length - 1}
-          step="1"
-          value={toneIndex}
-          onChange={handleToneChange}
-          className="w-full"
-        />
-        <div className="flex justify-between text-xs mt-1 px-1 select-none text-gray-600 font-medium">
-          {toneOptions.map((tone) => (
-            <span key={tone}>{tone}</span>
-          ))}
-        </div>
-        <div className="mt-1 text-sm font-semibold text-blue-600">
-          Selected: {config.personality}
-        </div>
-      </div>
+      </FormRow>
 
-      <div className="mb-2">
-        <span className="text-sm">Response Length</span>
+      <FormRow label="Tone">
+        <div>
+          <input
+            type="range"
+            min="0"
+            max={toneOptions.length - 1}
+            value={toneOptions.indexOf(config.personality)}
+            onChange={(e) =>
+              handleChange("personality", toneOptions[parseInt(e.target.value)])
+            }
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs mt-2 text-gray-500 font-medium">
+            {toneOptions.map((tone) => (
+              <span key={tone}>{tone}</span>
+            ))}
+          </div>
+          <div className="text-sm font-semibold text-blue-600 mt-1">
+            Selected: {config.personality}
+          </div>
+        </div>
+      </FormRow>
+
+      <FormRow label="Response Style">
         <select
-          className="mt-1 w-full border rounded px-2 py-1"
+          className="w-full border rounded px-3 py-2"
           value={config.message_length}
-          onChange={(e) => setConfig({ ...config, message_length: e.target.value })}
+          onChange={(e) => handleChange("message_length", e.target.value)}
         >
-          <option value="short">Short (1 sentence)</option>
-          <option value="medium">Medium (few sentences)</option>
-          <option value="long">Long (paragraph)</option>
+          <option value="short">Concise: quick, succinct responses (1 sentence)</option>
+          <option value="medium">Balanced: moderate, descriptive responses (2–4 sentences)</option>
+          <option value="long">Detailed: engaging, thorough responses (paragraph)</option>
         </select>
-      </div>
+      </FormRow>
 
-      <div className="mb-2">
-        <span className="text-sm">Payment Methods</span>
-        <div className="flex flex-wrap gap-2 mt-1">
+      <FormRow label="Payment Methods">
+        <div className="flex flex-wrap gap-2">
           {["GoPay", "OVO", "DANA", "QRIS", "Transfer"].map((method) => (
             <label
               key={method}
-              className={`px-2 py-1 rounded cursor-pointer border ${
+              className={`px-3 py-1 rounded cursor-pointer border text-sm ${
                 config.payment_methods.includes(method)
-                  ? "bg-blue-500 text-white"
+                  ? "bg-sky-500 text-white"
                   : "bg-gray-200 text-gray-700"
               }`}
               onClick={() => handleListCheckbox("payment_methods", method)}
@@ -160,17 +118,16 @@ export default function StoreConfigPanel() {
             </label>
           ))}
         </div>
-      </div>
+      </FormRow>
 
-      <div className="mb-2">
-        <span className="text-sm">Shipping Methods</span>
-        <div className="flex flex-wrap gap-2 mt-1">
+      <FormRow label="Shipping Methods">
+        <div className="flex flex-wrap gap-2">
           {["Wahana", "AnterAja", "SiCepat", "Gojek", "JNE", "Tiki", "Grab"].map((method) => (
             <label
               key={method}
-              className={`px-2 py-1 rounded cursor-pointer border ${
+              className={`px-3 py-1 rounded cursor-pointer border text-sm ${
                 config.shipping_methods.includes(method)
-                  ? "bg-blue-500 text-white"
+                  ? "bg-sky-500 text-white"
                   : "bg-gray-200 text-gray-700"
               }`}
               onClick={() => handleListCheckbox("shipping_methods", method)}
@@ -179,45 +136,65 @@ export default function StoreConfigPanel() {
             </label>
           ))}
         </div>
+      </FormRow>
+
+      <FormRow label="Preferences">
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={config.use_emojis}
+              onChange={(e) => handleChange("use_emojis", e.target.checked)}
+            />
+            Use Emojis
+          </label>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={config.suggest_related}
+              onChange={(e) => handleChange("suggest_related", e.target.checked)}
+            />
+            Suggest Related
+          </label>
+        </div>
+      </FormRow>
+
+      <FormRow label="Extra Info">
+
+        <textarea
+          ref={extraInfoRef}
+          rows={3}
+          className="w-full border rounded px-3 py-2"
+          placeholder="e.g. Toko kita dari Jakarta Selatan. Customer kita dipanggil 'bos'. Kita biasanya pake emoji 🙏"
+          value={config.extra_info || ""}
+          onChange={(e) => {
+            // Save cursor position
+            const cursorPos = extraInfoRef.current.selectionStart;
+            // Update config
+            setConfig({ ...config, extra_info: e.target.value });
+            // Restore focus and cursor position
+            setTimeout(() => {
+              if (extraInfoRef.current) {
+                extraInfoRef.current.focus();
+                extraInfoRef.current.setSelectionRange(cursorPos, cursorPos);
+              }
+            }, 0);
+          }}
+        />
+
+
+      </FormRow>
+
+      <div className="pt-6">
+        <button
+          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded shadow-sm"
+          onClick={updateConfig}
+        >
+          Save Settings
+        </button>
+        {status && <p className="mt-2 text-sm text-gray-600">{status}</p>}
       </div>
-
-      <div className="flex items-center gap-3 mt-2">
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={config.use_emojis}
-            onChange={(e) => setConfig({ ...config, use_emojis: e.target.checked })}
-          />
-          Use Emojis
-        </label>
-
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={config.use_stickers}
-            onChange={(e) => setConfig({ ...config, use_stickers: e.target.checked })}
-          />
-          Use Stickers
-        </label>
-
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={config.suggest_related}
-            onChange={(e) => setConfig({ ...config, suggest_related: e.target.checked })}
-          />
-          Suggest Related
-        </label>
-      </div>
-
-      <button
-        className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
-        onClick={updateConfig}
-      >
-        Save Settings
-      </button>
-
-      {status && <p className="mt-2 text-sm text-gray-700">{status}</p>}
     </div>
   );
 }

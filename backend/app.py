@@ -7,6 +7,7 @@ import requests
 from dotenv import load_dotenv
 import os
 import requests
+from bson import ObjectId
 from utils import log_error, error_response
 from uuid import uuid4
 from db import db
@@ -30,11 +31,12 @@ store_config = {
     "use_emojis": False,
     "use_stickers": False,
     "message_length": "short",
-    "personality": "casual"
+    "personality": "casual",
+    "extra_info": ""
 }
 
 #similar languages to indo - revert to indo when this happens
-SIMILAR_LANGS = {"ms", "tl", "jv", "su"}
+SIMILAR_LANGS = {"ms", "tl", "jv", "su", "fi"}
 
 load_dotenv()
 
@@ -72,9 +74,12 @@ def send_whatsapp_message(recipient_id, message_text):
         log_error("send_whatsapp_message", e)
 
 
-def process_user_message(sender_id, user_input, store_id, history=None):
+def process_user_message(sender_id, user_input, store_id, history, products=None):
     if not user_input:
         return {"error": "No message provided"}, 400
+
+    if products is None:
+        products = []
 
     if history is None:
         history = [{"role": msg["role"], "content": msg["content"]} for msg in get_chat_history(sender_id)]
@@ -102,10 +107,18 @@ def process_user_message(sender_id, user_input, store_id, history=None):
         except:
             lang = "id"
 
-    reply = get_bot_reply(user_input, config, language=lang, history=trimmed_history)
+    reply = get_bot_reply(
+        user_input,
+        config,
+        language=lang,
+        history=trimmed_history,
+        products=products  # ✅ THIS IS MANDATORY
+    )
+
     history.append({"role": "bot", "content": reply})
 
     log_message(sender_id, "bot", reply, store_id)
+    print(f"[🧪] Received {len(products)} products in process_user_message")
 
     return {"reply": reply, "history": history, "language": lang}
 
@@ -177,7 +190,10 @@ def chat():
         store_id = data.get("store_id")
         history = data.get("history", [])
 
-        result = process_user_message(sender_id, user_input, store_id, history)
+        products_doc = db.products.find_one({"store_id": store_id})
+        products = products_doc.get("products", []) if products_doc else []
+
+        result = process_user_message(sender_id, user_input, store_id, history, products)
         return jsonify(result)
     except Exception as e:
         log_error("/chat", e)
@@ -209,25 +225,34 @@ def receive_message():
         messages = value.get("messages")
         
         if not messages:
-            return "No messages", 200  # Might be a delivery/read receipt etc.
+            return "No messages", 200  # e.g., delivery/read receipts
 
         message = messages[0]
-        sender = message["from"]  # Phone number in WhatsApp ID format
+        sender = message["from"]  # e.g., "6281234567890"
         text = message["text"]["body"]
 
-        print(f"Received from {sender}: {text}")
+        print(f"📥 Received from {sender}: {text}")
 
-        # Generate reply using the same logic as the web chat
-        result = process_user_message(sender, text)
+        # 🧠 Try to get store_id from user DB
+        user = db.users.find_one({"user_id": sender})
+        if not user:
+            store_id = "store_mentari"
+            upsert_user(sender, {"origin": "whatsapp", "store_id": store_id})
+        else:
+            store_id = user["metadata"].get("store_id", "store_mentari")
+
+        history = get_chat_history(sender)
+        products = get_products(store_id)
+
+        result = process_user_message(sender, text, store_id, history, products)
         reply_text = result["reply"]
-
-        # Send reply back to WhatsApp via the API
         send_whatsapp_message(sender, reply_text)
 
     except Exception as e:
-        print("Error processing webhook:", e)
+        print("❌ Error processing webhook:", e)
 
     return "OK", 200
+
 
 
 
@@ -250,6 +275,8 @@ def upload_csv():
         df = pd.read_csv(file)
         product_list = df.to_dict(orient='records')
 
+        print("📥 store_id:", store_id)
+        print("📦 product_list:", product_list)
         save_products(store_id, product_list)
 
         # df.to_csv('products.csv', index=False)  # Overwrite old file - the default is products.csv
@@ -275,9 +302,19 @@ def get_config():
 
 @app.route('/get-products', methods=['GET'])
 def get_products_route():
-    store_id = request.args.get("store_id", "store_mentari")
-    return jsonify(get_products(store_id))
+    try:
+        store_id = request.args.get("store_id", "store_mentari")
+        cursor = db.products.find({"store_id": store_id})
 
+        products = []
+        for doc in cursor:
+            doc.pop("_id", None)
+            products.append(doc)
+
+        return jsonify({"products": products})
+    except Exception as e:
+        log_error("/get-products", e)
+        return error_response("Failed to retrieve products.", 500)
 
 
 if __name__ == "__main__":

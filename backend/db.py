@@ -13,5 +13,8 @@ messages = db["messages"]
 products = db["products"]
 users = db["users"]
 
-print(db.list_collection_names())
-
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)

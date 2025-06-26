@@ -32,10 +32,15 @@ def log_message(sender_id, role, content, store_id=None):
 
 # Products
 def save_products(store_id, product_list):
-    products.delete_many({"store_id": store_id})  # Overwrite
-    for product in product_list:
-        product["store_id"] = store_id
-        products.insert_one(product)
+    print(f"📥 store_id: {store_id}")
+    print(f"📦 product_list: {product_list}")
+
+    products.update_one(
+        {"store_id": store_id},
+        {"$set": {"products": product_list}},
+        upsert=True
+    )
+
 
 def get_products(store_id):
     return list(products.find({"store_id": store_id}))
