@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import AppWrapper from "../components/AppWrapper";
+import { API_BASE_URL } from "../config";
 
 function WaitlistPage() {
   const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ function WaitlistPage() {
     setStatus("Submitting...");
 
     try {
-      const res = await fetch("http://localhost:5000/join-waitlist", {
+      const res = await fetch(`${API_BASE_URL}/join-waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
