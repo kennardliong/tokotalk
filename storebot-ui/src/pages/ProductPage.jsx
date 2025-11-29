@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { WhatsappIcon, InstagramIcon, MessengerIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import AppWrapper from "../components/AppWrapper";
 
 function ChatBubble({ user, text }) {
@@ -168,13 +166,13 @@ export default function ProductPage() {
             <p className="text-sm text-gray-600 mb-4">Deploy your bot across popular platforms.</p>
             <div className="flex justify-center gap-6 items-center mt-4 flex-wrap">
               <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow border text-sm">
-                <HugeiconsIcon icon={WhatsappIcon} /> WhatsApp
+                 WhatsApp
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow border text-sm">
-                <HugeiconsIcon icon={InstagramIcon} /> Instagram
+                Instagram
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow border text-sm">
-                <HugeiconsIcon icon={MessengerIcon} /> Messenger
+                Messenger
               </div>
             </div>
           </StepCard>
