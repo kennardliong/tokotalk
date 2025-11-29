@@ -8,7 +8,8 @@ import DemoChat from "../components/DemoChat";
 const TABS = [
   { id: "config", label: "Configuration", icon: "⚙️" },
   { id: "products", label: "Products", icon: "📦" },
-  { id: "demo", label: "Demo Chat", icon: "💬" },
+  { id: "demo", label: "Demo Chat", icon: "🤖" },
+  { id: "integration", label: "WA/IG Plugin", icon: "💬" },
   { id: "messages", label: "Messages", icon: "📥" },
   { id: "analytics", label: "Analytics", icon: "📊" },
 ];
@@ -135,6 +136,7 @@ function Dashboard() {
           />
         )}
         {activeTab === "demo" && <DemoChat products={products} />}
+        {activeTab === "integration" && <p>WhatsApp and Instagram integration coming soon!</p>}
         {activeTab === "messages" && <p>Message Log coming soon!</p>}
         {activeTab === "analytics" && <p>Analytics coming soon!</p>}
       </main>

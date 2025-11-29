@@ -1,6 +1,6 @@
 # db_ops.py
 
-from db import store_configs, messages, products, users
+from db import store_configs, messages, products, users, waitlist
 from datetime import datetime
 
 # Store Configs
@@ -58,3 +58,9 @@ def upsert_user(user_id, metadata=None):
 def get_chat_history(sender_id, limit=10):
     cursor = messages.find({"sender_id": sender_id}).sort("timestamp", -1).limit(limit)
     return list(reversed(cursor))  # Return from oldest to newest
+
+
+# Waitlist
+def save_waitlist_entry(entry):
+    entry.setdefault("created_at", datetime.utcnow())
+    return waitlist.insert_one(entry).inserted_id

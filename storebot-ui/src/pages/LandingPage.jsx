@@ -20,6 +20,7 @@ function LandingPage() {
         <div className="flex gap-4 text-sm">
           <Link to="/product" className="text-sky-400 hover:text-sky-500">Product</Link>
           <Link to="/pricing" className="text-sky-400 hover:text-sky-500">Pricing</Link>
+          <Link to="/waitlist" className="text-sky-400 hover:text-sky-500">Waitlist</Link>
           <Link to="/register" className="text-sky-400 hover:text-sky-500">Register</Link>
           <Link to="/login" className="text-sky-400 hover:text-sky-500">Login</Link>
         </div>
@@ -46,6 +47,9 @@ function LandingPage() {
           </Link>
           <Link to="/login" className="border border-sky-400 text-sky-400 px-6 py-3 rounded-md text-lg font-semibold hover:bg-blue-50">
             Log In
+          </Link>
+          <Link to="/waitlist" className="bg-white text-sky-500 border border-sky-100 px-6 py-3 rounded-md text-lg font-semibold hover:bg-slate-50">
+            Join Waitlist
           </Link>
         </div>
       </section>

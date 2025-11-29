@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 import os
 import requests
 from bson import ObjectId
-from utils import log_error, error_response
+from utils import log_error, error_response, send_email_notification
 from uuid import uuid4
+from datetime import datetime
 from db import db
 from db_ops import (
     load_store_config,
@@ -18,7 +19,8 @@ from db_ops import (
     save_products,
     get_products,
     upsert_user,
-    get_chat_history
+    get_chat_history,
+    save_waitlist_entry
 )
 
 #default settings
@@ -179,6 +181,51 @@ def register_store():
     except Exception as e:
         log_error("/register-store", e)
         return error_response("Failed to register store.")
+
+
+@app.route("/join-waitlist", methods=["POST"])
+def join_waitlist():
+    try:
+        data = request.get_json() or {}
+        name = data.get("name")
+        email = data.get("email")
+        store_name = data.get("store_name")
+        store_size = data.get("store_size", "")
+        phone = data.get("phone", "")
+        notes = data.get("notes", "")
+
+        if not all([name, email, store_name]):
+            return error_response("Name, email, and store name are required.", 400)
+
+        entry = {
+            "name": name,
+            "email": email,
+            "store_name": store_name,
+            "store_size": store_size,
+            "phone": phone,
+            "notes": notes,
+            "source": data.get("source", "landing_page"),
+            "created_at": datetime.utcnow()
+        }
+
+        save_waitlist_entry(entry)
+
+        subject = f"[Tokotalk] New waitlist signup - {name}"
+        body = (
+            f"A new merchant just joined the waitlist.\n\n"
+            f"Name: {name}\n"
+            f"Email: {email}\n"
+            f"Store: {store_name}\n"
+            f"Store size: {store_size or '-'}\n"
+            f"Phone: {phone or '-'}\n"
+            f"Notes: {notes or '-'}\n"
+        )
+        send_email_notification(subject, body)
+
+        return {"message": "Thanks for joining the waitlist!"}, 200
+    except Exception as e:
+        log_error("/join-waitlist", e)
+        return error_response("Failed to join waitlist.")
 
 
 @app.route("/chat", methods=["POST"])
