@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 
 function RegisterPage() {
   const [storeName, setStoreName] = useState("");
@@ -12,7 +13,7 @@ function RegisterPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:5000/register-store", {
+      const res = await fetch(`${API_BASE_URL}/register-store`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
