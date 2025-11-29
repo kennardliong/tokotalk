@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { API_BASE_URL } from "../config";
 
 export default function DemoChat({ products }) {
   const [messages, setMessages] = useState([]);
@@ -16,7 +17,7 @@ export default function DemoChat({ products }) {
     setInput("");
 
     try {
-      const res = await fetch("http://localhost:5000/chat", {
+      const res = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
