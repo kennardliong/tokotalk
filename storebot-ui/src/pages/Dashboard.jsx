@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import CsvUploader from "../components/CsvUploader";
 import StoreConfigPanel from "../components/StoreConfigPanel";
 import DemoChat from "../components/DemoChat";
+import { API_BASE_URL } from "../config";
 
 const TABS = [
   { id: "config", label: "Configuration", icon: "⚙️" },
@@ -32,7 +33,7 @@ function Dashboard() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/get-products?store_id=${storeId}`);
+      const res = await fetch(`${API_BASE_URL}/get-products?store_id=${storeId}`);
       const data = await res.json();
       console.log("🛍️ fetched products:", data);
 
@@ -54,7 +55,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/get-config?store_id=${storeId}`);
+        const res = await fetch(`${API_BASE_URL}/get-config?store_id=${storeId}`);
         const data = await res.json();
         setConfig(data);
         setConfigLoaded(true);
@@ -67,7 +68,7 @@ function Dashboard() {
 
   const updateConfig = async () => {
     try {
-      const res = await fetch("http://localhost:5000/update-config", {
+      const res = await fetch(`${API_BASE_URL}/update-config`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ store_id: storeId, config }),
