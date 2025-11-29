@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE_URL } from "../config"; // adjust relative path
 
 export default function CsvUploader({ onUploadSuccess, products }) {
   console.log("🧾 Products received by CsvUploader:", products);
@@ -15,7 +16,7 @@ export default function CsvUploader({ onUploadSuccess, products }) {
     formData.append("store_id", storeId);
 
     try {
-      const res = await fetch("http://localhost:5000/upload-csv", {
+      const res = await fetch(`${API_BASE_URL}/upload-csv`, {
         method: "POST",
         body: formData,
       });
